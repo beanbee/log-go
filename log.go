@@ -69,56 +69,6 @@ type Logger struct {
 	debugMode   bool
 }
 
-// logDirCreate(): check and create dir if nonexist
-func logDirCreate(logDir string) error {
-	if _, err := os.Stat(logDir); os.IsNotExist(err) {
-		/* create directory */
-		err = os.MkdirAll(logDir, 0755)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// filenameGen(): generate filename
-func filenameGen(progName, logDir string, isErrLog bool) string {
-	var fileName string
-	if isErrLog {
-		/* for log file of warning, error, critical  */
-		fileName = filepath.Join(logDir, progName+".log.wf")
-	} else {
-		/* for log file of all log  */
-		fileName = filepath.Join(logDir, progName+".log")
-	}
-
-	return fileName
-}
-
-/* convert level in string to log4go level  */
-func stringToLevel(str string) log4go.LevelType {
-	var level log4go.LevelType
-
-	str = strings.ToUpper(str)
-	switch str {
-	case "DEBUG":
-		level = log4go.DEBUG
-	case "TRACE":
-		level = log4go.TRACE
-	case "INFO":
-		level = log4go.INFO
-	case "WARNING":
-		level = log4go.WARNING
-	case "ERROR":
-		level = log4go.ERROR
-	case "CRITICAL":
-		level = log4go.CRITICAL
-	default:
-		level = log4go.INFO
-	}
-	return level
-}
-
 // initial new logger - use default values
 func NewLogger(progName string) *Logger {
 	return &Logger{
@@ -195,6 +145,56 @@ func (l *Logger) SetStdOut(useStd bool) *Logger {
 
 func (l *Logger) GetStdOutMode() bool {
 	return l.hasStdOut
+}
+
+// logDirCreate(): check and create dir if nonexist
+func logDirCreate(logDir string) error {
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		/* create directory */
+		err = os.MkdirAll(logDir, 0755)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// filenameGen(): generate filename
+func filenameGen(progName, logDir string, isErrLog bool) string {
+	var fileName string
+	if isErrLog {
+		/* for log file of warning, error, critical  */
+		fileName = filepath.Join(logDir, progName+".log.wf")
+	} else {
+		/* for log file of all log  */
+		fileName = filepath.Join(logDir, progName+".log")
+	}
+
+	return fileName
+}
+
+/* convert level in string to log4go level  */
+func stringToLevel(str string) log4go.LevelType {
+	var level log4go.LevelType
+
+	str = strings.ToUpper(str)
+	switch str {
+	case "DEBUG":
+		level = log4go.DEBUG
+	case "TRACE":
+		level = log4go.TRACE
+	case "INFO":
+		level = log4go.INFO
+	case "WARNING":
+		level = log4go.WARNING
+	case "ERROR":
+		level = log4go.ERROR
+	case "CRITICAL":
+		level = log4go.CRITICAL
+	default:
+		level = log4go.INFO
+	}
+	return level
 }
 
 /*
