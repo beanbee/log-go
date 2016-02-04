@@ -7,16 +7,16 @@
 */
 
 /*
-DESCRIPTION
+DESCRIPTION:
 log: encapsulation for log4go
 
 Usage:
     import log "github.com/beanbee/log-go"
 
     // Two log files will be generated in ./log:
-    // test.log, and test.wf.log(for log > warn)
+    // test.log, and test.log.wf (for log > warn)
     // The log will rotate, and there is support for backup count
-    logger ,err := log.NewLogger("test").SetLogDir("./log").EnableWf(true).Init()
+    logger ,err := log.NewLogger("test").SetLogDir("./log").Init()
 
     logger.Warn("warn msg")
     logger.Info("info msg")
@@ -40,7 +40,7 @@ import (
 const DEFAULT_LOG_FORMAT = `[%D %T] [%L] %M`
 
 /*
-DESCRIPTION: log4go encapsulation
+DESCRIPTION: struct "Logger" - log4go encapsulation
 
 PARAMS:
   - progName: program name. Name of log file will be progName.log
@@ -55,7 +55,7 @@ PARAMS:
   - backupCount: If backupCount is > 0, when rollover is done, no more than
       backupCount files are kept - the oldest ones are deleted.
   - enableWf: using extra log file for 'warning, error, critical' level msg
-  - debugMode: use log4go.FORMAT_DEFAULT instead of DEFAULT_LOG_FORMAT
+  - debugMode: use log4go.FORMAT_DEFAULT_WITH_PID instead of DEFAULT_LOG_FORMAT
 */
 type Logger struct {
 	log4go.Logger
@@ -150,7 +150,7 @@ func (l *Logger) GetStdOutMode() bool {
 // logDirCreate(): check and create dir if nonexist
 func logDirCreate(logDir string) error {
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
-		/* create directory */
+		// create directory
 		err = os.MkdirAll(logDir, 0755)
 		if err != nil {
 			return err
@@ -163,10 +163,10 @@ func logDirCreate(logDir string) error {
 func filenameGen(progName, logDir string, isErrLog bool) string {
 	var fileName string
 	if isErrLog {
-		/* for log file of warning, error, critical  */
+		// for log file of warning, error, critical
 		fileName = filepath.Join(logDir, progName+".log.wf")
 	} else {
-		/* for log file of all log  */
+		// for log file of all log
 		fileName = filepath.Join(logDir, progName+".log")
 	}
 
