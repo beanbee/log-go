@@ -3,6 +3,7 @@
    modification history
    --------------------
    2016/02/03, by Chen Jian, create
+   2016/02/04, by Chen Jian, add getter and setter
 */
 
 /*
@@ -15,7 +16,7 @@ Usage:
     // Two log files will be generated in ./log:
     // test.log, and test.wf.log(for log > warn)
     // The log will rotate, and there is support for backup count
-    logger ,err := log.Init("test", "INFO", "./log", true, "midnight", 5)
+    logger ,err := log.NewLogger("test").SetLogDir("./log").EnableWf(true).Init()
 
     logger.Warn("warn msg")
     logger.Info("info msg")
@@ -35,14 +36,38 @@ import (
 	"code.google.com/p/log4go"
 )
 
-type Logger struct{ log4go.Logger }
+// default log format
+const DEFAULT_LOG_FORMAT = `[%D %T] [%L] %M`
 
-// private logger
-var Plog Logger
-var initialized bool = false
+/*
+DESCRIPTION: log4go encapsulation
 
-// log format - DEFAULT: log4go.FORMAT_DEFAULT
-var logFormat string = "[%D %T] [%L] %M"
+PARAMS:
+  - progName: program name. Name of log file will be progName.log
+  - levelStr: "DEBUG", "TRACE", "INFO", "WARNING", "ERROR", "CRITICAL"
+  - logDir: directory for log. It will be created if noexist
+  - hasStdOut: whether to have stdout output
+  - when:
+      "M", minute
+      "H", hour
+      "D", day
+      "MIDNIGHT", roll over at midnight
+  - backupCount: If backupCount is > 0, when rollover is done, no more than
+      backupCount files are kept - the oldest ones are deleted.
+  - enableWf: using extra log file for 'warning, error, critical' level msg
+  - debugMode: use log4go.FORMAT_DEFAULT instead of DEFAULT_LOG_FORMAT
+*/
+type Logger struct {
+	log4go.Logger
+	progName    string
+	level       string
+	logDir      string
+	when        string
+	backupCount int
+	hasStdOut   bool
+	enableWf    bool
+	debugMode   bool
+}
 
 // logDirCreate(): check and create dir if nonexist
 func logDirCreate(logDir string) error {
@@ -94,105 +119,144 @@ func stringToLevel(str string) log4go.LevelType {
 	return level
 }
 
+// initial new logger - use default values
+func NewLogger(progName string) *Logger {
+	return &Logger{
+		progName:    progName,
+		level:       "INFO",
+		logDir:      "log",
+		when:        "MIDNIGHT",
+		backupCount: 7,
+		hasStdOut:   false,
+		enableWf:    true,
+		debugMode:   false,
+	}
+}
+
+// access private variable through getter/setter function
+func (l *Logger) SetLevel(level string) *Logger {
+	l.level = level
+	return l
+}
+
+func (l *Logger) GetLevel() string {
+	return l.level
+}
+
+func (l *Logger) SetLogDir(logDir string) *Logger {
+	l.logDir = logDir
+	return l
+}
+
+func (l *Logger) GetLogDir() string {
+	return l.logDir
+}
+
+func (l *Logger) SetWhen(when string) *Logger {
+	l.when = when
+	return l
+}
+
+func (l *Logger) GetWhen() string {
+	return l.when
+}
+
+func (l *Logger) SetBackupCount(days int) *Logger {
+	l.backupCount = days
+	return l
+}
+
+func (l *Logger) GetBackupCount() int {
+	return l.backupCount
+}
+
+func (l *Logger) EnableWf(useWf bool) *Logger {
+	l.enableWf = useWf
+	return l
+}
+
+func (l *Logger) GetEnableWf() bool {
+	return l.enableWf
+}
+
+func (l *Logger) SetDebugMode(debug bool) *Logger {
+	l.debugMode = debug
+	return l
+}
+
+func (l *Logger) GetDebugMode() bool {
+	return l.debugMode
+}
+
+func (l *Logger) SetStdOut(useStd bool) *Logger {
+	l.hasStdOut = useStd
+	return l
+}
+
+func (l *Logger) GetStdOutMode() bool {
+	return l.hasStdOut
+}
+
 /*
 Init - initialize log lib
-
-PARAMS:
-  - progName: program name. Name of log file will be progName.log
-  - levelStr: "DEBUG", "TRACE", "INFO", "WARNING", "ERROR", "CRITICAL"
-  - logDir: directory for log. It will be created if noexist
-  - hasStdOut: whether to have stdout output
-  - when:
-      "M", minute
-      "H", hour
-      "D", day
-      "MIDNIGHT", roll over at midnight
-  - backupCount: If backupCount is > 0, when rollover is done, no more than
-      backupCount files are kept - the oldest ones are deleted.
-  - enableWf: using extra log file for 'warning, error, critical' level msg
 
 RETURNS:
     *Logger, nil - if succeed
     nil, error   - if fail
 */
-func Init(progName string, levelStr string, logDir string,
-	hasStdOut bool, when string, backupCount int, enableWf bool) (Logger, error) {
-	/* check when   */
-	if !log4go.WhenIsValid(when) {
-		return Logger{}, fmt.Errorf("invalid value of when: %s", when)
+func (l *Logger) Init() (*Logger, error) {
+	// check when
+	if !log4go.WhenIsValid(l.when) {
+		return nil, fmt.Errorf("invalid value of when: %s", l.when)
 	}
 
-	/* check, and create dir if nonexist    */
-	if err := logDirCreate(logDir); err != nil {
-		log4go.Error("Init(), in logDirCreate(%s)", logDir)
-		return Logger{}, err
+	// check, and create dir if nonexist
+	if err := logDirCreate(l.logDir); err != nil {
+		log4go.Error("Init(), in logDirCreate(%s)", l.logDir)
+		return nil, err
 	}
 
-	/* convert level from string to log4go level    */
-	level := stringToLevel(levelStr)
+	// convert level from string to log4go level
+	level := stringToLevel(l.level)
 
-	/* create logger    */
+	// create logger
 	logger := make(log4go.Logger)
 
-	/* create writer for stdout */
-	if hasStdOut {
+	// create writer for stdout
+	if l.hasStdOut {
 		logger.AddFilter("stdout", level, log4go.NewConsoleLogWriter())
 	}
 
-	/* create file writer for all log   */
-	fileName := filenameGen(progName, logDir, false)
-	logWriter := log4go.NewTimeFileLogWriter(fileName, when, backupCount)
+	// set logger format
+	logFormat := func(enableDebug bool) string {
+		if enableDebug {
+			return log4go.FORMAT_DEFAULT_WITH_PID
+		}
+		return DEFAULT_LOG_FORMAT
+	}(l.debugMode)
+
+	// create file writer for all log
+	fileName := filenameGen(l.progName, l.logDir, false)
+	logWriter := log4go.NewTimeFileLogWriter(fileName, l.when, l.backupCount)
 	if logWriter == nil {
-		return Logger{}, fmt.Errorf("error in log4go.NewTimeFileLogWriter(%s)", fileName)
+		return nil, fmt.Errorf("error in log4go.NewTimeFileLogWriter(%s)", fileName)
 	}
-	// logWriter.SetFormat(log4go.LogFormat)
 	logWriter.SetFormat(logFormat)
 	logger.AddFilter("log", level, logWriter)
 
-	/* create file writer for warning and fatal log */
-	if enableWf {
-		fileNameWf := filenameGen(progName, logDir, true)
-		logWriter = log4go.NewTimeFileLogWriter(fileNameWf, when, backupCount)
+	// create file writer for warning and fatal log
+	if l.enableWf {
+		fileNameWf := filenameGen(l.progName, l.logDir, true)
+		logWriter = log4go.NewTimeFileLogWriter(fileNameWf, l.when, l.backupCount)
 		if logWriter == nil {
-			return Logger{}, fmt.Errorf("error in log4go.NewTimeFileLogWriter(%s)", fileNameWf)
+			return nil, fmt.Errorf("error in log4go.NewTimeFileLogWriter(%s)", fileNameWf)
 		}
 		logWriter.SetFormat(logFormat)
 		logger.AddFilter("log_wf", log4go.WARNING, logWriter)
 	}
 
-	return Logger{logger}, nil
-}
+	// set Logger
+	l.Logger = logger
 
-/*
-InitPrivate - initialize private logger, for situation when using extra logger inside package
-
-Usage:
-    log.Init("test", "INFO", "./log", true, "midnight", 5)
-    log.Plog.Warn("warn msg")
-    log.Plog.Info("info msg")
-
-PARAMS:
-    same as Init()
-
-RETURNS:
-    nil, if succeed
-    error, if fail
-*/
-func InitPrivate(progName string, levelStr string, logDir string,
-	hasStdOut bool, when string, backupCount int, enableWf bool) error {
-	var err error
-	if initialized {
-		fmt.Println("Initialized Already")
-		// return errors.New("Initialized Already")
-		return nil
-	}
-
-	// init private logger
-	Plog, err = Init(progName, levelStr, logDir, hasStdOut, when, backupCount, enableWf)
-	if err != nil {
-		return err
-	}
-
-	initialized = true
-	return nil
+	return l, nil
 }
