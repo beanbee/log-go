@@ -4,6 +4,7 @@
    --------------------
    2016/02/03, by Chen Jian, create
    2016/02/04, by Chen Jian, add getter and setter
+   2016/02/21, by Chen Jian, add string.trimspace for progName
 */
 
 /*
@@ -164,10 +165,10 @@ func filenameGen(progName, logDir string, isErrLog bool) string {
 	var fileName string
 	if isErrLog {
 		// for log file of warning, error, critical
-		fileName = filepath.Join(logDir, progName+".log.wf")
+		fileName = filepath.Join(logDir, strings.TrimSpace(progName)+".log.wf")
 	} else {
 		// for log file of all log
-		fileName = filepath.Join(logDir, progName+".log")
+		fileName = filepath.Join(logDir, strings.TrimSpace(progName)+".log")
 	}
 
 	return fileName
