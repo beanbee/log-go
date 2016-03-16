@@ -4,6 +4,7 @@
    --------------------
    2016/02/03, by Chen Jian, create
    2016/02/04, by Chen Jian, add setter test
+   2016/03/16, by Chen Jian, add debugMode test
 */
 
 package log
@@ -22,6 +23,7 @@ func TestLog(t *testing.T) {
 
 	logger.Warn("warning msg")
 	logger.Info("info msg")
+	logger.Debug("debug msg")
 	logger.Error("error msg")
 	logger.Close()
 
