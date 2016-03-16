@@ -5,6 +5,7 @@
    2016/02/03, by Chen Jian, create
    2016/02/04, by Chen Jian, add getter and setter
    2016/02/21, by Chen Jian, add string.trimspace for progName
+   2016/03/16, by Chen Jian, set log level to 'log4go.DEBUG' in debugMode
 */
 
 /*
@@ -219,6 +220,9 @@ func (l *Logger) Init() (*Logger, error) {
 
 	// convert level from string to log4go level
 	level := stringToLevel(l.level)
+	if l.GetDebugMode() {
+		level = log4go.DEBUG
+	}
 
 	// create logger
 	logger := make(log4go.Logger)
