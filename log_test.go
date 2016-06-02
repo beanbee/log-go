@@ -2,9 +2,9 @@
 /*
    modification history
    --------------------
-   2016/02/03, by Chen Jian, create
-   2016/02/04, by Chen Jian, add setter test
-   2016/03/16, by Chen Jian, add debugMode test
+   2016/02/03, by beanbee, create
+   2016/02/04, by beanbee, add setter test
+   2016/03/16, by beanbee, add debugMode test
 */
 
 package log
@@ -16,7 +16,7 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	logger, err := NewLogger("test").SetLogDir("./log").EnableWf(true).SetDebugMode(true).Init()
+	logger, err := NewLogger("test").SetLogDir("./log").EnableWf(true).EnableDebug(true).Init()
 	if err != nil {
 		t.Error("log.Init() fail")
 	}
@@ -25,9 +25,15 @@ func TestLog(t *testing.T) {
 	logger.Info("info msg")
 	logger.Debug("debug msg")
 	logger.Error("error msg")
-	logger.Close()
+	for i := 0; i < 999; i++ {
+		logger.Warn("%d warning msg", i)
+		logger.Info("%d info msg", i)
+		logger.Debug("%d debug msg", i)
+		logger.Error("%d error msg", i)
+	}
 
 	time.Sleep(100 * time.Millisecond)
+	logger.Close()
 
 	// delete temp log directory
 	os.RemoveAll("./log")
