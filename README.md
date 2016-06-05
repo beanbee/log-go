@@ -2,6 +2,7 @@
 Encapsulation of log4go.
 
 Usage:
+```Go
     import log "github.com/beanbee/log-go"
 
     // Generate two log files in "./log" directory (xx.log, xx.log.wf)
@@ -15,4 +16,5 @@ Usage:
 
     // it is required, to work around the bug of log4go
     time.Sleep(100 * time.Millisecond)
+```
 
