@@ -7,6 +7,7 @@
    2016/02/21, by beanbee, add string.trimspace for progName
    2016/03/16, by beanbee, set log level to 'log4go.DEBUG' in debugMode
    2016/06/02, by beanbee, add rotate size
+   2016/08/01, by beanbee, add enableRotate
 */
 
 /*
@@ -19,7 +20,7 @@ Usage:
     // Two log files will be generated in ./log
     // test.log, and test.log.wf (for log > warn)
     // The log will rotate, and with support for backup count
-    logger ,err := log.NewLogger("test").SetLogDir("./log").Init()
+    logger ,err := log.NewLogger("test", "./log").Init()
 
     logger.Warn("warn msg")
     logger.Info("info msg")
@@ -39,8 +40,8 @@ import (
 )
 
 const (
-	LOG_FORMAT_WITHOUT_SRC = "[%D %T] [%L] %M"
-	ROTATE_SIZE_DEFAULT    = 1024 * 1024 * 1024 // 1 GB
+	FORMAT_WITHOUT_SRC  = "[%D %T] [%L] %M"
+	DEFAULT_ROTATE_SIZE = 1024 * 1024 * 1024 // 1 GB
 )
 
 /*
@@ -61,29 +62,38 @@ type Logger struct {
 	enableWf     bool
 	enableDebug  bool
 	enableStdout bool
+	enableRotate bool
 
 	log4go.Logger
 }
 
 // initial new logger - use default values
-func NewLogger(progName string) *Logger {
+func NewLogger(progName string, logDir string) *Logger {
 	return &Logger{
-		progName:     progName,
-		logDir:       "log",
-		rotateSize:   ROTATE_SIZE_DEFAULT,
+		progName: progName,
+		logDir: func(dir string) string {
+			if dir == "" {
+				return "./" // convert empty dir to "./"
+			}
+			return dir
+		}(logDir),
 		enableStdout: false,
 		enableWf:     false,
 		enableDebug:  false,
+		enableRotate: false,
 	}
 }
 
-func (l *Logger) SetLogDir(dir string) *Logger {
-	l.logDir = dir
-	return l
-}
+// func (l *Logger) SetRotateSize(size int) *Logger {
+// 	l.rotateSize = size
+// 	return l
+// }
 
-func (l *Logger) SetRotateSize(size int) *Logger {
-	l.rotateSize = size
+func (l *Logger) EnableRotate(enable bool) *Logger {
+	l.enableRotate = enable
+	if enable && l.rotateSize == 0 {
+		l.rotateSize = DEFAULT_ROTATE_SIZE
+	}
 	return l
 }
 
@@ -151,7 +161,7 @@ func (l *Logger) Init() (*Logger, error) {
 		if enableDebug {
 			return log4go.FORMAT_DEFAULT
 		}
-		return LOG_FORMAT_WITHOUT_SRC
+		return FORMAT_WITHOUT_SRC
 	}(l.enableDebug)
 
 	// create logger
@@ -164,18 +174,22 @@ func (l *Logger) Init() (*Logger, error) {
 
 	// create file writer for all log
 	fileName := filenameGen(l.progName, l.logDir, false)
-	logWriter := log4go.NewFileLogWriter(fileName, true)
+	logWriter := log4go.NewFileLogWriter(fileName, l.enableRotate)
+	if l.enableRotate {
+		logWriter.SetRotateSize(l.rotateSize)
+		logWriter.SetRotateDaily(true)
+	}
 	logWriter.SetFormat(logFormat)
-	logWriter.SetRotateSize(l.rotateSize)
-	logWriter.SetRotateDaily(true)
 	logger.AddFilter("log", level, logWriter)
 
 	if l.enableWf {
 		fileNameWf := filenameGen(l.progName, l.logDir, true)
-		logWriterWf := log4go.NewFileLogWriter(fileNameWf, true)
+		logWriterWf := log4go.NewFileLogWriter(fileNameWf, l.enableRotate)
+		if l.enableRotate {
+			logWriterWf.SetRotateSize(l.rotateSize)
+			logWriterWf.SetRotateDaily(true)
+		}
 		logWriterWf.SetFormat(logFormat)
-		logWriterWf.SetRotateSize(l.rotateSize)
-		logWriterWf.SetRotateDaily(true)
 		logger.AddFilter("log_wf", log4go.WARNING, logWriterWf)
 	}
 

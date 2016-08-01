@@ -8,7 +8,7 @@ Usage:
     // Generate two log files in "./log" directory (xx.log, xx.log.wf)
     // Log filter: -> test.log.wf (log.level > warn)
     // Log rotate: support for backup count
-    logger ,err := log.NewLogger("test").SetLogDir("./log").Init()
+    logger ,err := log.NewLogger("test", "./log").Init()
 	
     logger.Warn("warn msg")
     logger.Info("info msg")

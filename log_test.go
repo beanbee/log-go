@@ -1,10 +1,10 @@
-/* log_test.go - test for log.go */
+/*	log_test.go - test for log.go */
 /*
-   modification history
-   --------------------
-   2016/02/03, by beanbee, create
-   2016/02/04, by beanbee, add setter test
-   2016/03/16, by beanbee, add debugMode test
+	modification history
+	--------------------
+	2016/02/03, by beanbee, create
+	2016/02/04, by beanbee, add setter test
+	2016/03/16, by beanbee, add debugMode test
 */
 
 package log
@@ -16,7 +16,7 @@ import (
 )
 
 func TestLog(t *testing.T) {
-	logger, err := NewLogger("test").SetLogDir("./log").EnableWf(true).EnableDebug(true).Init()
+	logger, err := NewLogger("test", "log").EnableWf(true).EnableDebug(true).Init()
 	if err != nil {
 		t.Error("log.Init() fail")
 	}
